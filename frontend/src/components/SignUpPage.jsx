@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
+import { useState } from 'react';
+
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -19,6 +21,9 @@ import Divider from '@mui/material/Divider';
 import GoogleIcon from '@mui/icons-material/Google';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import XIcon from '@mui/icons-material/X';
+import { useEffect } from 'react';
+
+import defaultbgimg from '../assets/images/defaultbgimage.jpg';
 
 function Copyright(props) {
     return (
@@ -39,13 +44,73 @@ const defaultTheme = createTheme();
 
 
 const SignUpPage = () => {
+    const [bgImage, setBgImage] = useState('');
+    const [bgImageFetch, setBgImageFetch] = useState(false);
+
+    useEffect(() => {
+        fetch('https://source.unsplash.com/featured/?quote')
+         .then((res) => setBgImage(res.url))
+         .catch((err) => {
+            setBgImageFetch(true)
+            console.error('Error in fetching Bg Image',err)
+         })
+    }, []);
+
+    const [formData, setFormData] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        allowExtraEmails: false,
+    })
+
+    const [errors, setErrors] = useState({});
+
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        const newValue = type === 'checkbox' ? checked : value;
+        setFormData({
+            ...formData,
+            [name]: newValue,
+        });
+    };
+
     const handleSubmit = (event) => {
         event.preventDefault();
-        const data = new FormData(event.currentTarget);
-        console.log({
-            email: data.get('email'),
-            password: data.get('password'),
-        });
+
+        const newErrors = {};
+
+        if (!formData.firstName.trim()) {
+            newErrors.firstName = 'First Name is required';
+        }
+
+        if (!formData.lastName.trim()) {
+            newErrors.lastName = 'Last Name is required';
+        }
+
+        if (!formData.email.trim()) {
+            newErrors.email = 'Email is required';
+        } else if (!/^\S+@\S+\.\S+$/.test(formData.email.trim())) {
+            newErrors.email = 'Email is invalid';
+        }
+
+        if (!formData.password.trim()) {
+            newErrors.password = 'Password is required';
+        }
+
+        if (!formData.confirmPassword.trim()) {
+            newErrors.confirmPassword = 'Confirm Password is required';
+        } else if (formData.confirmPassword !== formData.password) {
+            newErrors.confirmPassword = 'Confirm Password doesnot match';
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
+        console.log('Form Submitted: ', formData);
     };
 
     return (
@@ -56,7 +121,7 @@ const SignUpPage = () => {
                     <Box
                         sx={{
                             width: '90%',
-                            margin: '10% auto 0',
+                            margin: '5% auto 0',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
@@ -80,7 +145,12 @@ const SignUpPage = () => {
                                         id="firstName"
                                         label="First Name"
                                         autoFocus
+                                        value={formData.firstName}
+                                        onChange={handleChange}
+                                        error={!!errors.firstName}
+                                        helperText={errors.firstName}
                                     />
+
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
                                     <TextField
@@ -90,16 +160,25 @@ const SignUpPage = () => {
                                         label="Last Name"
                                         name="lastName"
                                         autoComplete="family-name"
+                                        value={formData.lastName}
+                                        onChange={handleChange}
+                                        error={!!errors.lastName}
+                                        helperText={errors.lastName}
                                     />
                                 </Grid>
                                 <Grid item xs={12}>
                                     <TextField
                                         required
                                         fullWidth
+                                        type='email'
                                         id="email"
                                         label="Email Address"
                                         name="email"
                                         autoComplete="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        error={!!errors.email}
+                                        helperText={errors.email}
                                     />
                                 </Grid>
                                 <Grid item xs={12}>
@@ -111,11 +190,37 @@ const SignUpPage = () => {
                                         type="password"
                                         id="password"
                                         autoComplete="new-password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        error={!!errors.password}
+                                        helperText={errors.password}
+                                    />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        required
+                                        fullWidth
+                                        name="confirmPassword"
+                                        label="Confirm Password"
+                                        type="confirmPassword"
+                                        id="confirmPassword"
+                                        autoComplete="new-confirmPassword"
+                                        value={formData.confirmPassword}
+                                        onChange={handleChange}
+                                        error={!!errors.confirmPassword}
+                                        helperText={errors.confirmPassword}
                                     />
                                 </Grid>
                                 <Grid item xs={12}>
                                     <FormControlLabel
-                                        control={<Checkbox value="allowExtraEmails" color="primary" />}
+                                        control={
+                                            <Checkbox
+                                                checked={formData.allowExtraEmails}
+                                                onChange={handleChange}
+                                                name="allowExtraEmails"
+                                                color="primary"
+                                            />
+                                        }
                                         label="I want to receive inspiration, marketing promotions and updates via email."
                                     />
                                 </Grid>
@@ -125,16 +230,17 @@ const SignUpPage = () => {
                                 fullWidth
                                 variant="contained"
                                 sx={{ mt: 3, mb: 2 }}
+                                onClick={handleSubmit}
                             >
                                 Sign Up
                             </Button>
                             <Grid container justifyContent="flex-end">
                                 <Grid item>
-                                <RouterLink to="/" style={{ textDecoration: 'underline', color: '#1976d2' }}>
-                                            <Typography variant="body2">
-                                                {"Already have an account? Sign in"}
-                                            </Typography>
-                                        </RouterLink>
+                                    <RouterLink to="/" style={{ textDecoration: 'underline', color: '#1976d2' }}>
+                                        <Typography variant="body2">
+                                            {"Already have an account? Sign in"}
+                                        </Typography>
+                                    </RouterLink>
                                     {/* <Link href="#" variant="body2">
                                         Already have an account? Sign in
                                     </Link> */}
@@ -167,9 +273,9 @@ const SignUpPage = () => {
 
                         </Box>
                     </Box>
-                <Box>
-                    <Copyright sx={{ mt: 5 }} />
-                </Box>
+                    <Box>
+                        <Copyright sx={{ mt: 5 }} />
+                    </Box>
                 </Grid>
                 <Grid
                     item
@@ -177,7 +283,7 @@ const SignUpPage = () => {
                     sm={6}
                     md={6}
                     sx={{
-                        backgroundImage: 'url(https://source.unsplash.com/random?wallpapers)',
+                        backgroundImage: `url(${bgImageFetch ? defaultbgimg : bgImage})`, backgroundImage: `url(${bgImage})`,
                         backgroundRepeat: 'no-repeat',
                         backgroundColor: (t) =>
                             t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],

@@ -19,6 +19,10 @@ import Divider from '@mui/material/Divider';
 import GoogleIcon from '@mui/icons-material/Google';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import XIcon from '@mui/icons-material/X';
+import { useState } from 'react';
+import { useEffect } from 'react';
+
+import defaultbgimg from '../assets/images/defaultbgimage.jpg';
 
 
 function Copyright(props) {
@@ -40,13 +44,53 @@ const defaultTheme = createTheme();
 
 
 const LoginPage = () => {
+
+    const [bgImage, setBgImage] = useState('');
+    const [bgImageFetch, setBgImageFetch] = useState(false);
+
+    useEffect(() => {
+        fetch('https://source.unsplash.com/featured/?quote')
+         .then((res) => setBgImage(res.url))
+         .catch((err) => {
+            setBgImageFetch(true)
+            console.error('Error in fetching Bg Image',err)
+         })
+    }, []);
+
+    const [loginData, setLoginData] = useState({
+        email: '',
+        password: ''
+    });
+
+    const [loginErrors, setLoginErrors] = useState({});
+
+    const handleInputChange = (e) => {
+        const {name, value, type}  = e.target;
+        setLoginData({
+           ...loginData,
+            [name]: value,
+        });
+    };
+
     const handleSubmit = (event) => {
         event.preventDefault();
-        const data = new FormData(event.currentTarget);
-        console.log({
-            email: data.get('email'),
-            password: data.get('password'),
-        });
+
+        const newErrors = {};
+
+        if(!loginData.email.trim()){
+            newErrors.email = "Email is required";
+        }
+
+        if(!loginData.password.trim()){
+            newErrors.password = "Password is required";
+        }
+
+        if(Object.keys(newErrors).length > 0){
+            setLoginErrors(newErrors);
+            return;
+        }
+
+        console.log('Login Data: ', loginData);
     };
 
     return (
@@ -59,7 +103,7 @@ const LoginPage = () => {
                     sm={4}
                     md={7}
                     sx={{
-                        backgroundImage: 'url(https://source.unsplash.com/random?wallpapers)',
+                        backgroundImage: `url(${bgImageFetch ? defaultbgimg : bgImage})`,
                         backgroundRepeat: 'no-repeat',
                         backgroundColor: (t) =>
                             t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
@@ -70,7 +114,7 @@ const LoginPage = () => {
                 <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
                     <Box
                         sx={{
-                            my: 8,
+                            my: 4,
                             mx: 4,
                             display: 'flex',
                             flexDirection: 'column',
@@ -102,6 +146,10 @@ const LoginPage = () => {
                                     name="email"
                                     autoComplete="email"
                                     autoFocus
+                                    value={loginData.email}
+                                    onChange={handleInputChange}
+                                    error={!!loginErrors.email}
+                                    helperText={loginErrors.email}
                                 />
                                 <TextField
                                     margin="normal"
@@ -112,6 +160,10 @@ const LoginPage = () => {
                                     type="password"
                                     id="password"
                                     autoComplete="current-password"
+                                    value={loginData.password}
+                                    onChange={handleInputChange}
+                                    error={!!loginErrors.password}
+                                    helperText={loginErrors.password}
                                 />
                                 {/* <FormControlLabel
                     control={<Checkbox value="remember" color="primary" />}
@@ -122,6 +174,7 @@ const LoginPage = () => {
                                     fullWidth
                                     variant="contained"
                                     sx={{ mt: 3, mb: 2 }}
+                                    onClick={handleSubmit}
                                 >
                                     Sign In
                                 </Button>
