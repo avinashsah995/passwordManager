@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-import { useState } from 'react';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -21,7 +22,6 @@ import Divider from '@mui/material/Divider';
 import GoogleIcon from '@mui/icons-material/Google';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import XIcon from '@mui/icons-material/X';
-import { useEffect } from 'react';
 
 import defaultbgimg from '../assets/images/defaultbgimage.jpg';
 
@@ -46,6 +46,7 @@ const defaultTheme = createTheme();
 const SignUpPage = () => {
     const [bgImage, setBgImage] = useState('');
     const [bgImageFetch, setBgImageFetch] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetch('https://source.unsplash.com/featured/?quote')
@@ -111,6 +112,14 @@ const SignUpPage = () => {
         }
 
         console.log('Form Submitted: ', formData);
+
+        axios.post('http://localhost:5000/signup', {...formData})
+        .then((res)=> {console.log('Form Submitted: ', res)
+        navigate('/');
+        })
+        .catch((err) => console.error('Error in submitting form', err));
+
+        
     };
 
     return (
